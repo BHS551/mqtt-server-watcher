@@ -1,20 +1,23 @@
 const fs = require('fs')
 const mqtt = require('mqtt')
+const { default: RecordsPile } = require('./recordsPile')
 
 const protocol = 'mqtts'
-const host = 'e5547786a1c644639b5584dd5bebea46.s1.eu.hivemq.cloud'
+const host = '5188977cda41495fa6804228c07f7d59.s1.eu.hivemq.cloud'
 const port = '8883'
 const clientId = `mqtt_${Math.random().toString(16).slice(3)}`
 
 const connectUrl = `${protocol}://${host}:${port}`
+
+const recodsPile = new RecordsPile();
 
 const createMqttConnection = () => {
   const client = mqtt.connect(connectUrl, {
     clientId,
     clean: true,
     connectTimeout: 4000,
-    username: 'bhs551',
-    password: 'cualquierCosa551',
+    username: 'lonedevvs',
+    password: 'Secreto123',
     reconnectPeriod: 1000,
 
     // If the server is using a self-signed certificate, you need to pass the CA.
@@ -32,6 +35,11 @@ const createMqttConnection = () => {
         client.publish("health", "subscribed");
       }
     });
+    client.subscribe("testTopic", (err) => {
+      if (!err) {
+        client.publish("health", "subscribed to testTopic topic");
+      }
+    });
   });
 
   client.on("message", (topic, message) => {
@@ -39,6 +47,11 @@ const createMqttConnection = () => {
     console.log(message.toString());
     if (topic == 'health' && message.includes("check")) {
       client.publish("health", "Ok");
+    }
+    if (topic == 'testTopic' && message.includes("voltage")) {
+      const voltage = message.toString().split(': ')[1];
+      console.log(voltage)
+      recodsPile.addRecord(voltage)
     }
   });
 }
